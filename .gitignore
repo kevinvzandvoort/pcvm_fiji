@@ -47,3 +47,16 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# output folder
+output/
+
+# processed data
+data/epidemiology/prevalence/*_processed.RDS
+data/epidemiology/clearance_rate/*_processed.RDS
+data/demography/*_processed.RDS
+data/demography/digaale_survey_population.RDS
+data/demography/digaale_contact_data.RDS
+
+#model build files
+model/build/*
