@@ -6,7 +6,7 @@ pacman::p_load(data.table, Rcpp, RcppArmadillo, inline, deSolve, rootSolve, magr
 #'  2: working directory of pcvm
 #'  3: name of output folder to store objects (e.g. date, or specific scenario name)
 #'  4: integer identifying the chain that is ran (will also be used to set the seed)
-.args = if(interactive()) c(getwd(), "model/pcvm", "20231102") else commandArgs(trailingOnly = TRUE)
+.args = if(interactive()) c(getwd(), "model/pcvm", "20231162") else commandArgs(trailingOnly = TRUE)
 .args = setNames(.args, c("pcvmr_dir", "pcvm_dir", "output_subdir"))
 setwd(.args["pcvmr_dir"])
 
