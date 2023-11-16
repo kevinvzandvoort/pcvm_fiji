@@ -14,7 +14,7 @@ pacman::p_load(data.table, Rcpp, RcppArmadillo, inline, deSolve, rootSolve,
 #' 1. install the remotes package, which allows to install packages from Github
 pacman::p_load(remotes)
 #' 2. delete the old version of the package, if it was installed
-remove.packages("rootsolve")
+remove.packages("rootSolve")
 #' 3. install the Github version
 remotes::install_github("https://github.com/kevinvzandvoort/rootSolve")
 #' 4. if all went well, it can now successfully be loaded

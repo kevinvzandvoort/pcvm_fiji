@@ -8,3 +8,5 @@ To start
 1. Install required packages in install_packages.R
 2. Open model_single_run.R and run line by line
    - eventually, update model_setup.R to change model parameters
+
+Make sure to clone using git clone --recurse-submodules, so the PCVm gitmodule will be cloned as well

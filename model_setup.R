@@ -66,7 +66,19 @@ model_populations = list(
       #the population size
       N = population_size_model[, value]),
     #specific parameters for each vaccine stratum in this population
-    "arms" = list()),
+    "arms" = list(
+      "unvaccinated" = list(
+        #no longer used. TODO refactor out
+        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+        #coverage for each arm
+        #coverage for a catch-up campaign - these are applied to people who are in the defined age groups once
+        "coverage_c" = list(
+          list(value = no_coverage, time = 0)),
+        #coverage for routine vaccination - these are applied to people ageing into the defined age group(s) continuously
+        "coverage_r" = list(
+          list(value = no_coverage, time = 0)),
+        "waning" = vwaning,
+        "efficacy" = ve))),
   "3p+0" = list(
     "parameters" = list(
       adjust_acq_vt = NULL_RR, adjust_acq_nvt = NULL_RR,
@@ -75,65 +87,86 @@ model_populations = list(
       betaNVT = contact_matrix_model %>% t,
       N = population_size_model[, value]),
     "arms" = list(
-      "1p+0" = list(
+      "unvaccinated" = list(
         #no longer used. TODO refactor out
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
         #coverage for each arm
         #coverage for a catch-up campaign - these are applied to people who are in the defined age groups once
         "coverage_c" = list(
-          list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months"), set_units(2, "years")), coverage = 0.80), time = 365*(1/12))),
+          list(value = no_coverage, time = 0),
+          list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months"), set_units(5, "years")), coverage = 0.80),
+               time = 365*(1/12),
+               coverage_to = rep("1p+0", age_groups_model[, .N]))),
         #coverage for routine vaccination - these are applied to people ageing into the defined age group(s) continuously
         "coverage_r" = list(
-          list(value = getVaccineCoverage(age_groups_model, set_units(2, "months"), coverage = 0.80), time = 365*(1/12)),
-          list(value = getVaccineCoverage(age_groups_model, set_units(2, "months"), coverage = 0.75), time = 365*1),
-          list(value = getVaccineCoverage(age_groups_model, set_units(2, "months"), coverage = 0.85), time = 365*2)),
+          list(value = no_coverage, time = 0),
+          list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months")), coverage = 0.80), time = 365*(1/12),
+               coverage_to = rep("1p+0", age_groups_model[, .N]))),
+        "waning" = vwaning,
+        "efficacy" = ve),
+      "1p+0" = list(
+        #no longer used. TODO refactor out
+        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+        "coverage_c" = list(
+          list(value = no_coverage, time = 0)),
+        "coverage_r" = list(
+          list(value = no_coverage, time = 0),
+          list(value = getVaccineCoverage(age_groups_model, c(set_units(3, "months")), coverage = 0.95), time = 365*(1/12),
+               coverage_to = rep("2p+0", age_groups_model[, .N]))),
         "waning" = vwaning,
         "efficacy" = ve),
       "2p+0" = list(
         #no longer used. TODO refactor out
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
         #coverage for each arm
-        "coverage_c" = list(list(value = no_coverage, time = 0)),
+        "coverage_c" = list(
+          list(value = no_coverage, time = 0)),
         "coverage_r" = list(
-          list(value = getVaccineCoverage(age_groups_model, set_units(3, "months"), coverage = 0.95), time = 365*(1/12))),
+          list(value = no_coverage, time = 0),
+          list(value = getVaccineCoverage(age_groups_model, c(set_units(4, "months")), coverage = 0.90), time = 365*(1/12),
+               coverage_to = rep("3p+0", age_groups_model[, .N]))),
         "waning" = vwaning,
         "efficacy" = ve),
       "3p+0" = list(#no longer used. TODO refactor out
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        #coverage for each arm
-        "coverage_c" = list(list(value = no_coverage, time = 0)),
-        "coverage_r" = list(
-          list(value = getVaccineCoverage(age_groups_model, set_units(4, "months"), coverage = 0.95), time = 365*(1/12))),
-        "waning" = vwaning,
-        "efficacy" = ve))),
-  "1p+1" = list(
-    "parameters" = list(
-      adjust_acq_vt = NULL_RR, adjust_acq_nvt = NULL_RR,
-      adjust_acq_start = -1, adjust_acq_stop = 1e6,
-      betaVT = contact_matrix_model %>% t,
-      betaNVT = contact_matrix_model %>% t,
-      N = population_size_model[, value]),
-    "arms" = list(
-      "1p+0" = list(
-        #no longer used. TODO refactor out
-        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        #coverage for each arm
-        "coverage_c" = list(list(value = no_coverage, time = 0)),
-        "coverage_r" = list(
-          list(value = getVaccineCoverage(age_groups_model, set_units(2, "months"), coverage = 0.80), time = 365*(1/12)),
-          list(value = getVaccineCoverage(age_groups_model, set_units(2, "months"), coverage = 0.75), time = 365*1),
-          list(value = getVaccineCoverage(age_groups_model, set_units(2, "months"), coverage = 0.85), time = 365*2)),
-        "waning" = vwaning,
-        "efficacy" = ve),
-      "1p+1" = list(
-        #no longer used. TODO refactor out
-        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        #coverage for each arm
-        "coverage_c" = list(list(value = no_coverage, time = 0)),
-        "coverage_r" = list(
-          list(value = getVaccineCoverage(age_groups_model, set_units(12, "months"), coverage = 0.95), time = 365*(1/12))),
-        "waning" = vwaning,
-        "efficacy" = ve))))
+        "waning" = vwaning, "efficacy" = ve))))
+
+#' update coverage_to for populations
+model_populations = lapply(model_populations, function(population){
+  arm_names = names(population$arms)
+  population$arms = lapply(arm_names, function(name, arms){
+    arm = arms[[name]]
+    arm$coverage_r = arm$coverage_r %>% lapply(function(x, arms, name){
+      if(!is.null(x$coverage_to)){
+        x$coverage_to = x$coverage_to %>% sapply(function(z, arms){
+          which(arms == z) - 1
+        }, arms)  
+      } else {
+        x$coverage_to = rep(which(arms == name), age_groups_model[, .N])
+      }
+      
+      return(x)
+    }, names(arms), name)
+    
+    arm$coverage_c = arm$coverage_c %>% lapply(function(x, arms, name){
+      if(!is.null(x$coverage_to)){
+        x$coverage_to = x$coverage_to %>% sapply(function(z, arms){
+          which(arms == z) - 1
+        }, arms)  
+      } else {
+        x$coverage_to = rep(which(arms == name), age_groups_model[, .N])
+      }
+      
+      return(x)
+    }, names(arms), name)
+    
+    return(arm)
+  }, population$arms)
+  
+  names(population$arms) = arm_names
+  
+  return(population)
+})
 
 #' E - Generic parameters for all populations used in the model
 params_vac = list(
@@ -148,8 +181,12 @@ params_vac = list(
 
 #' For the unvaccinated scenario, all model population arms are emptied
 params_unvac = params_vac
-params_unvac$trial_arms = model_populations %>% lapply(function(p){p$arms = list(); return(p)})
-
+params_unvac$trial_arms = model_populations %>% lapply(function(p){
+  p$arms = list(
+    "unvaccinated" = list("coverage" = no_coverage, "catchup_coverage" = no_coverage,
+                          "coverage_c" = list(), "coverage_r" = list()))
+  return(p)
+})
 #' F - Setup model parameters passed to the model
 model_params = list(
   params_unvac = params_unvac,
