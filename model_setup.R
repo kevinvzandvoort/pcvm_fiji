@@ -1,3 +1,4 @@
+# Github test
 #' A - Generic constant values
 MODEL_TIMESTEP = 1 #days
 MODEL_START_DATE = as.Date("2022-01-01") #when does the model start?
