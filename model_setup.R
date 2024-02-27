@@ -10,7 +10,13 @@ age_groups_model = c(set_units(c(0:12), "month"), set_units(c(1:5, 6, 10, 15, 20
 #' - Risk-ratio that will do nothing (TODO: refactor)
 NULL_RR = c(0) %>% setAgeBreaks() %>% .[, value := 1] %>%
   combineAgeBreaks(x = age_groups_model, y = .) %>% .[, value]
-populations = 3 #number of populations
+populations = 2 #number of populations
+
+#---------------------------------------------
+#' TO AMEND TO 1 population                   |
+#' populations = 1 #number of populations     |
+#' BUT BREAKS MODEL SINGLE RUNCHANGED TO 1    |
+#---------------------------------------------
 
 #' B - Infection specific parameters
 #' clearance rates per day
@@ -35,10 +41,25 @@ contact_matrix_model = adjustContactMatrixAgeGroups(age_groups_model[, -"age"], 
   
 #' determines contact between populations
 travel_matrix = diag(1, populations, populations)
+
+#' --------------------------------------------------------------------------------------------------------------------
+#' The travel_matrix defines potential contacts or travel between different populations within the model.             |
+#' Originally designed to accommodate a scenario with 3  populations, it uses the 'populations' variable              |
+#' to dynamically set its dimensions. Updating  model to single, non-traveling population, populations adjusted to=1  |
+#' travel_matrix is now a 1x1  matrix becuase (diag,1, populations, popualtions) is the same as diag(1,1,1) yes?      | 
+#' implicitly reflecting the absence of inter-population travel or contact. So no need to change travel_matrix, as it |
+#' automatically conforms to the single population structure by the adjustment of 'populations' to 1.                 |
+#' -------------------------------------------------------------------------------------------------------------------
   
 #' determines migration between populations
 migration_matrix = matrix(0, nrow = populations, ncol = populations)
-  
+
+
+#' --------------------------------------------------------------------------------------------------------------------
+#' migration_matrix is for potential migration events between different populations within the model
+#' Updating populations to=1, inter-population migration becomes irrelevant. no modifiation of migration_matrix is 
+#' needed with populations=1, correct? And this keeps the model's integrity and allows to change later if wanted?
+#' --------------------------------------------------------------------------------------------------------------------
 #' Values repeated in vaccination_strategies
 no_coverage = age_groups_model %>% getVaccineCoverage(set_units(0, "year"), 0)
 ve = age_groups_model %>% combineAgeBreaks(vaccine_efficacy_transmission) %>% .[, value]
@@ -53,83 +74,175 @@ vwaning = age_groups_model %>% combineAgeBreaks(vaccine_waning_rates) %>% .[, va
 #'   contact matrix before transposing)
 #' - Nb need to refactor start and stop of acq adjustments. Set for negative and very large timesteps now
 #'   to make sure they are always active
+#' model_populations = list(
+#'  #one list for each parameter
+#'  "unvaccinated" = list(
+#'    "parameters" = list(
+#'      #adjust acquisition of VTs and NVTs between the defined times (TODO refactor as optional)
+#'      adjust_acq_vt = NULL_RR, adjust_acq_nvt = NULL_RR,
+#'      adjust_acq_start = -1, adjust_acq_stop = 1e6,
+#'      #the contact matrix, note that rows should be contactors and columns contactees
+#'      betaVT = contact_matrix_model %>% t,
+#'      betaNVT = contact_matrix_model %>% t,
+#'      #the population size
+#'      N = population_size_model[, value]),
+#'    #specific parameters for each vaccine stratum in this population
+#'    "arms" = list(
+#'    "unvaccinated" = list(
+#'        #no longer used. TODO refactor out
+#'        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+#'        #coverage for each arm
+#'        #coverage for a catch-up campaign - these are applied to people who are in the defined age groups once
+#'        "coverage_c" = list(
+#'          list(value = no_coverage, time = 0)),
+#'        #coverage for routine vaccination - these are applied to people ageing into the defined age group(s) continuously
+#'        "coverage_r" = list(
+#'        list(value = no_coverage, time = 0)),
+#'        "waning" = vwaning,
+#'        "efficacy" = ve))),
+#'  "3p+0" = list(
+#'    "parameters" = list(
+#'      adjust_acq_vt = NULL_RR, adjust_acq_nvt = NULL_RR,
+#'      adjust_acq_start = -1, adjust_acq_stop = 1e6,
+#'      betaVT = contact_matrix_model %>% t,
+#'      betaNVT = contact_matrix_model %>% t,
+#'      N = population_size_model[, value]),
+#'    "arms" = list(
+#'      "unvaccinated" = list(
+#'        #no longer used. TODO refactor out
+#'        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+#'        #coverage for each arm
+#'        #coverage for a catch-up campaign - these are applied to people who are in the defined age groups once
+#'        "coverage_c" = list(
+#'          list(value = no_coverage, time = 0),
+#'          list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months"), set_units(5, "years")), coverage = 0.80),
+#'               time = 365*(1/12),
+#'               coverage_to = rep("1p+0", age_groups_model[, .N]))),
+#'        #coverage for routine vaccination - these are applied to people ageing into the defined age group(s) continuously
+#'        "coverage_r" = list(
+#'          list(value = no_coverage, time = 0),
+#'          list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months")), coverage = 0.80), time = 365*(1/12),
+#'               coverage_to = rep("1p+0", age_groups_model[, .N]))),
+#'        "waning" = vwaning,
+#'        "efficacy" = ve),
+#'      "1p+0" = list(
+#'        #no longer used. TODO refactor out
+#'        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+#'        "coverage_c" = list(
+#'          list(value = no_coverage, time = 0)),
+#'        "coverage_r" = list(
+#'          list(value = no_coverage, time = 0),
+#'          list(value = getVaccineCoverage(age_groups_model, c(set_units(3, "months")), coverage = 0.95), time = 365*(1/12),
+#'               coverage_to = rep("2p+0", age_groups_model[, .N]))),
+#'        "waning" = vwaning,
+#'        "efficacy" = ve),
+#'      "2p+0" = list(
+#'        #no longer used. TODO refactor out
+#'        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+#'        #coverage for each arm
+#'        "coverage_c" = list(
+#'          list(value = no_coverage, time = 0)),
+#'        "coverage_r" = list(
+#'          list(value = no_coverage, time = 0),
+#'          list(value = getVaccineCoverage(age_groups_model, c(set_units(4, "months")), coverage = 0.90), time = 365*(1/12),
+#'               coverage_to = rep("3p+0", age_groups_model[, .N]))),
+#'         "waning" = vwaning,
+#'          "efficacy" = ve),
+#'      "3p+0" = list(#no longer used. TODO refactor out
+#'        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
+#'       "waning" = vwaning, "efficacy" = ve))))
+#' ---------------------------------------------------------------------------------------------------------------------
+#'
+#' Specify populations to model for PCV schedules "3+0" and "1+1"
+#'
+#' This section outlines the configuration for different pneumococcal conjugate vaccine (PCV) schedules,
+#' specifically focusing on the "3+0" (three doses in the primary series without a booster) and "1+1"
+#' (one dose in the primary series plus a booster). It excludes the "2+0" schedule.
+#'
+#' - Make sure to transpose the contact matrices so that columns denote contactees and rows contactors.
+#'   This is crucial for the matrix multiplication when calculating the force of infection (FOI) in the model.
+#'   For example, row i in the transposed matrix represents the average number of contacts made by individuals
+#'   of age i across all age groups. This row is then multiplied by a column vector representing the prevalence
+#'   of infection in each age group, which is summed to calculate the average number of effective contacts
+#'   with infectious individuals made by someone aged i. The transposition ensures the correct orientation
+#'   for these calculations.
+#'
+#' - Note: The start and stop times for adjusting acquisition (acq) need refactoring. Currently, they are set
+#'   to negative and very large time steps, respectively, to ensure they are always considered active in the
+#'   model's calculations. This approach ensures that the adjustments for acquisition are applied universally
+#'   across the modeled time frame, but may be refined for more specific temporal dynamics in future revisions.
+#'
+#' This configuration excludes the "2+0" schedule to concentrate on evaluating the impacts and outcomes
+#' of the "3+0" and "1+1" schedules within the modeled populations.
+
+#' Define model populations for evaluating PCV schedules
 model_populations = list(
-  #one list for each parameter
+  # Unvaccinated population configuration
   "unvaccinated" = list(
     "parameters" = list(
-      #adjust acquisition of VTs and NVTs between the defined times (TODO refactor as optional)
+      # Placeholder values for adjusting acquisition rates for vaccine types (VT) and non-vaccine types (NVT)
       adjust_acq_vt = NULL_RR, adjust_acq_nvt = NULL_RR,
+      # Time range for acquisition adjustment: active from the start and essentially indefinitely
       adjust_acq_start = -1, adjust_acq_stop = 1e6,
-      #the contact matrix, note that rows should be contactors and columns contactees
-      betaVT = contact_matrix_model %>% t,
-      betaNVT = contact_matrix_model %>% t,
-      #the population size
+      # Transpose contact matrices for VT and NVT to align rows with contactors and columns with contactees
+      betaVT = contact_matrix_model %>% t(),
+      betaNVT = contact_matrix_model %>% t(),
+      # Population size derived from model-specific parameter
       N = population_size_model[, value]),
-    #specific parameters for each vaccine stratum in this population
+    # Vaccination arm configurations for the unvaccinated population
     "arms" = list(
       "unvaccinated" = list(
-        #no longer used. TODO refactor out
+        # Coverage settings indicate no vaccination coverage or catch-up campaigns
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        #coverage for each arm
-        #coverage for a catch-up campaign - these are applied to people who are in the defined age groups once
-        "coverage_c" = list(
-          list(value = no_coverage, time = 0)),
-        #coverage for routine vaccination - these are applied to people ageing into the defined age group(s) continuously
-        "coverage_r" = list(
-          list(value = no_coverage, time = 0)),
+        # Definitions for catch-up (c) and routine (r) vaccination coverage, both set to none
+        "coverage_c" = list(list(value = no_coverage, time = 0)),
+        "coverage_r" = list(list(value = no_coverage, time = 0)),
+        # Parameters for vaccine waning and efficacy, specific to this arm
         "waning" = vwaning,
         "efficacy" = ve))),
+  # Configuration for the "3+0" PCV schedule
   "3p+0" = list(
     "parameters" = list(
+      # Similar configuration for adjusting acquisition rates and time range as the unvaccinated group
       adjust_acq_vt = NULL_RR, adjust_acq_nvt = NULL_RR,
       adjust_acq_start = -1, adjust_acq_stop = 1e6,
-      betaVT = contact_matrix_model %>% t,
-      betaNVT = contact_matrix_model %>% t,
+      # Transposed contact matrices for calculating FOIs with adjusted population and vaccination status
+      betaVT = contact_matrix_model %>% t(),
+      betaNVT = contact_matrix_model %>% t(),
       N = population_size_model[, value]),
+    # Vaccination arm configurations under the "3+0" schedule
     "arms" = list(
       "unvaccinated" = list(
-        #no longer used. TODO refactor out
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        #coverage for each arm
-        #coverage for a catch-up campaign - these are applied to people who are in the defined age groups once
+        # Catch-up and routine vaccination coverage, with specific values for initiating "1p+1" coverage
         "coverage_c" = list(
           list(value = no_coverage, time = 0),
           list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months"), set_units(5, "years")), coverage = 0.80),
                time = 365*(1/12),
-               coverage_to = rep("1p+0", age_groups_model[, .N]))),
-        #coverage for routine vaccination - these are applied to people ageing into the defined age group(s) continuously
+               coverage_to = rep("1p+1", age_groups_model[, .N]))),
         "coverage_r" = list(
           list(value = no_coverage, time = 0),
           list(value = getVaccineCoverage(age_groups_model, c(set_units(2, "months")), coverage = 0.80), time = 365*(1/12),
-               coverage_to = rep("1p+0", age_groups_model[, .N]))),
+               coverage_to = rep("1p+1", age_groups_model[, .N]))),
         "waning" = vwaning,
         "efficacy" = ve),
-      "1p+0" = list(
-        #no longer used. TODO refactor out
+      # Configuration for the "1+1" PCV schedule within the "3+0" context
+      "1p+1" = list(
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        "coverage_c" = list(
-          list(value = no_coverage, time = 0)),
+        # Only routine vaccination coverage specified for transitioning to "3p+0" with high coverage
+        "coverage_c" = list(list(value = no_coverage, time = 0)),
         "coverage_r" = list(
           list(value = no_coverage, time = 0),
           list(value = getVaccineCoverage(age_groups_model, c(set_units(3, "months")), coverage = 0.95), time = 365*(1/12),
-               coverage_to = rep("2p+0", age_groups_model[, .N]))),
-        "waning" = vwaning,
-        "efficacy" = ve),
-      "2p+0" = list(
-        #no longer used. TODO refactor out
-        "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        #coverage for each arm
-        "coverage_c" = list(
-          list(value = no_coverage, time = 0)),
-        "coverage_r" = list(
-          list(value = no_coverage, time = 0),
-          list(value = getVaccineCoverage(age_groups_model, c(set_units(4, "months")), coverage = 0.90), time = 365*(1/12),
                coverage_to = rep("3p+0", age_groups_model[, .N]))),
         "waning" = vwaning,
         "efficacy" = ve),
-      "3p+0" = list(#no longer used. TODO refactor out
+      # Default parameters for the "3+0" vaccination arm, reflecting no direct coverage but inheriting global parameters
+      "3p+0" = list(
         "coverage" = no_coverage, "catchup_coverage" = no_coverage,
-        "waning" = vwaning, "efficacy" = ve))))
+        "waning" = vwaning,
+        "efficacy" = ve))))
+#' ---------------------------------------------------------------------------------------------------------------------
 
 #' update coverage_to for populations
 model_populations = lapply(model_populations, function(population){

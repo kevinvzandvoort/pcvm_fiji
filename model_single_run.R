@@ -1,6 +1,8 @@
 #' load/update all libraries
 pacman::p_load(data.table, Rcpp, RcppArmadillo, inline, deSolve, rootSolve, magrittr, units, ggplot2)
 
+setwd("G:/01 Current Projects/DFAT Fiji PCV 1+1/Modelling/pcvm_fiji")
+
 #' set arguments if R is running interactively, otherwise arguments should be passed to the Rscript command
 #'  1: working directory of pcvmr (make sure to setwd manually if running interactively)
 #'  2: working directory of pcvm

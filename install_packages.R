@@ -2,9 +2,13 @@
 #' - I like to use the pacman package to install other packages, it automatically
 #'   installs a package if not yet installed, loads it if installed, and updates
 #'   it if a new version is available
+
+#' EN added the setwd
+setwd("G:/01 Current Projects/DFAT Fiji PCV 1+1/Modelling/pcvm_fiji")
+
 install.packages("pacman")
 #' - The pacman package can now be used to manage all other dependencies
-pacman::p_load(data.table, Rcpp, RcppArmadillo, inline, deSolve, rootSolve,
+pacman::p_load(data.table, Rcpp, RcppArmadillo, inline, deSolve,
                readxl, magrittr, binom, qs, units, BayesianTools, ggplot)
 
 #' There is one other package that needs to be installed: rootsolve
